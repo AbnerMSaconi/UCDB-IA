@@ -47,7 +47,7 @@ ucdb-chat/
 
 ## 🔧 Instalação
 
-```bash
+---
 # 1. Clone o repositório
 git clone https://github.com/seu-usuario/ucdb-chat.git
 cd ucdb-chat
