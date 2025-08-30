@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.python-version
+
+# FastAPI / Uvicorn
+.uvicorn*
+*.log
+logs/
+*.sqlite3
+
+# Sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Arquivos de build
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+coverage/
+*.cover
+*.py,cover
+.hypothesis/
+.mypy_cache/
+.pytest_cache/
+cover/
+build/
+dist/
+*.egg-info
+
+# Embeddings e vetores
+embeddings/
+*.faiss
+*.pkl
+
+# Configuração
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# Navegador
+*.html~
+*.css~
+*.js~
+
+# Sistema de arquivos temporários
+*.tmp
+*.temp
