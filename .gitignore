@@ -89,3 +89,4 @@ embeddings/
 # Sistema de arquivos temporários
 *.tmp
 *.temp
+pdfs/
