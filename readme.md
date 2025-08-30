@@ -1,13 +1,12 @@
-# UCDB Chat - Sistema de Chat com RAG e Qwen3-14B
+# UCDB Chat 🧠💬  
+> Sistema de chat inteligente baseado em **RAG (Retrieval-Augmented Generation)**, **FastAPI**, **llama.cpp** e o modelo **Qwen3-14B**.  
 
-> 🚀 Chat inteligente baseado em documentos, usando RAG, FastAPI, llama.cpp e Qwen3-14B.
-
-Este sistema permite fazer perguntas sobre documentos PDFs carregados, com respostas ricas, formatadas em Markdown e geradas em tempo real por um modelo de linguagem local (Qwen3-14B).
+Permite fazer perguntas sobre **documentos PDF** carregados, retornando respostas formatadas em **Markdown**, geradas em tempo real por um LLM local.  
 
 ---
 
-## 📁 Estrutura do Projeto
----
+## 📂 Estrutura do Projeto
+```
 ucdb-chat/
 ├── app/
 │   ├── core/
@@ -19,44 +18,43 @@ ucdb-chat/
 │   │   ├── routes.py       # Rotas FastAPI
 │   │   └── schemas.py      # Modelos Pydantic
 │   └── utils/
-│       ├── logger.py       # Sistema de logging
+│       └── logger.py       # Sistema de logging
 ├── static/                 # Frontend (HTML, CSS, JS)
 │   ├── index.html
 │   └── assets/
 │       ├── css/style.css
 │       ├── js/script.js
 │       └── lib/marked.min.js
-├── pdfs/                   # ← Adicione seus PDFs aqui
-├── embeddings/             # ← Gerado automaticamente (FAISS)
-├── logs/                   # ← Logs do sistema
+├── pdfs/                   # PDFs adicionados pelo usuário
+├── embeddings/             # Vetores gerados automaticamente (FAISS)
+├── logs/                   # Arquivos de log
 ├── .env.example
-├── .gitignore
-├── main.py                 # Ponto de entrada
 ├── requirements.txt
+├── main.py                 # Ponto de entrada
 └── README.md
----
-
-## 🛠️ Requisitos
-
-- Python 3.10+
-- Modelo Qwen3-14B (formato `.gguf`)
-- `llama-server` (do projeto `llama.cpp`)
-- `nomic-embed-text-v1.5` (opcional, para embeddings)
+```
 
 ---
 
-## 🔧 Instalação
+## ⚙️ Requisitos
+- **Python 3.10+**
+- Modelo **Qwen3-14B** no formato `.gguf`
+- **llama-server** (via [llama.cpp](https://github.com/ggerganov/llama.cpp))
+- (Opcional) `nomic-embed-text-v1.5` para embeddings
 
 ---
+
+## 🚀 Instalação
+
+```bash
 # 1. Clone o repositório
 git clone https://github.com/seu-usuario/ucdb-chat.git
 cd ucdb-chat
 
 # 2. Crie e ative o ambiente virtual
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate     # Windows
+source venv/bin/activate   # Linux/Mac
+venv\Scriptsctivate      # Windows
 
 # 3. Instale as dependências
 pip install -r requirements.txt
@@ -64,167 +62,129 @@ pip install -r requirements.txt
 # 4. Crie as pastas necessárias
 mkdir pdfs embeddings logs
 
-# 5. Coloque seus PDFs técnicos em /pdfs
-# Ex: transistores.pdf, eletronica_basica.pdf
-
-##🚀 Como Executar 
-#1. Inicie o LLM (em outro terminal) na porta 8080
-
-#2. Inicie o servidor de embeddings (opcional) na porta 8081
-
-#3. Inicie o UCDB Chat
-    python main.py
-Acesse: http://localhost:8000 
+# 5. Coloque seus PDFs em /pdfs
+```
 
 ---
-##📚 Documentação dos Módulos
+
+## ▶️ Como Executar
+
+1. **Inicie o LLM** (em outro terminal) na porta **8080**  
+2. **Inicie o servidor de embeddings** (opcional) na porta **8081**  
+3. **Inicie o UCDB Chat**  
+
+```bash
+python main.py
+```
+
+Acesse em: **http://localhost:8000**
+
 ---
-##📄 app/core/config.py 
 
-#Função: Define todas as configurações do sistema. 
-#Variáveis: 
+## 📚 Documentação dos Módulos
 
-    APP_NAME: Nome do app
-    LLM_BASE_URL: URL do llama-server (http://localhost:8080/v1)
-    EMBEDDING_API_URL: URL do servidor de embeddings
-    MAX_TOKENS: 2048 (respostas longas)
-    TEMPERATURE: 0.8 (criatividade)
-    CHUNK_SIZE: 812 (tamanho dos pedaços de texto)
-    RETRIEVAL_K: 4 (número de chunks recuperados)
-     
+### 🔧 `app/core/config.py`
+- Define as configurações principais:  
+  - `APP_NAME`, `LLM_BASE_URL`, `EMBEDDING_API_URL`, `MAX_TOKENS`, `TEMPERATURE`, etc.  
+- Caminhos: `vectorstore_path`, `pdf_path`, `static_path`.  
 
-#Propriedades: 
+### 🔧 `app/core/embeddings.py`
+- Classe `LlamaEmbeddings`  
+  - `embed_documents(texts)` → gera embeddings para documentos  
+  - `embed_query(text)` → gera embedding para uma consulta  
 
-    .vectorstore_path: Caminho para embeddings/
-    .pdf_path: Caminho para pdfs/
-    .static_path: Caminho para static/
-     
+### 🔧 `app/core/llm.py`
+- Classe `LlamaServerLLM`  
+  - Integração com `llama-server` em `:8080`  
+  - Método `_call(prompt)` envia o prompt e retorna a resposta  
 
- 
-#📄 app/core/embeddings.py 
+### 🔧 `app/core/rag.py`
+- `criar_vectorstore()` → Carrega PDFs, divide em chunks, gera embeddings e armazena no FAISS  
+- `criar_rag_chain(vectorstore)` → Cria pipeline RAG com LangChain  
 
-#Classe: LlamaEmbeddings 
+### 🔧 `app/api/schemas.py`
+- Modelo `ChatRequest`:  
+  ```python
+  message: str
+  ```
 
-#Gera embeddings usando o llama-server em :8081/embedding. 
-#Métodos: 
+### 🔧 `app/api/routes.py`
+- **GET /** → retorna `index.html`  
+- **POST /chat** → recebe mensagem e retorna resposta via SSE  
 
-    embed_documents(texts): Gera embeddings para múltiplos textos
-    embed_query(text): Gera embedding para uma consulta
-     
+### 🔧 `app/utils/logger.py`
+- Configuração avançada de logs com **loguru**  
 
- 
-#📄 app/core/llm.py 
+### 🔧 `app/main.py`
+- Criação da instância FastAPI  
+- Monta middlewares, rotas e arquivos estáticos  
 
-#Classe: LlamaServerLLM 
+---
 
-#Integração com o llama-server em :8080. 
-#Métodos: 
+## 💻 Frontend (static/)
+- `index.html` → página principal do chat  
+- `script.js` → streaming de respostas, markdown renderizado com `marked.js`  
+- `style.css` → design responsivo, temas modernos  
 
-    _call(prompt): Envia prompt ao LLM e retorna resposta
-    Usa requests para POST em /completions
-    Parâmetros: max_tokens, temperature, stop, etc.
-     
+---
 
- 
-#📄 app/core/rag.py 
+## 🔑 Variáveis de Ambiente (`.env.example`)
+```ini
+APP_NAME=UCDB Chat
+DEBUG=true
+MAX_TOKENS=2048
+TEMPERATURE=0.8
+```
 
-#Funções: 
-criar_vectorstore() 
+Renomeie para `.env` antes de usar.  
 
-    Carrega PDFs com PyPDFLoader
-    Divide em chunks com RecursiveCharacterTextSplitter
-    Gera embeddings e salva em embeddings/ com FAISS
-    Retorna vectorstore (FAISS)
-     
+---
 
-criar_rag_chain(vectorstore) 
+## 🧪 Testes
 
-    Cria RetrievalQA com LangChain
-    Usa prompt com {context} e {question}
-    Retorna chain pronta para perguntas
-     
+### Testar RAG isolado
+```bash
+python -c "
+from app.core.rag import criar_vectorstore, criar_rag_chain
+vectorstore = criar_vectorstore()
+chain = criar_rag_chain(vectorstore)
+print(chain({'query': 'O que é um transistor?'}))
+"
+```
 
- 
-📄 app/api/schemas.py 
+### Testar LLM diretamente
+```bash
+curl http://localhost:8080/v1/completions   -H "Content-Type: application/json"   -d '{"prompt":"Explique transistores.","max_tokens":512}'
+```
 
-Modelo: ChatRequest 
+---
 
-    message: str: Mensagem do usuário
-     
+## 🐛 Solução de Problemas
+- **Erro: `BaseSettings` não encontrado** → `pip install pydantic-settings`  
+- **RAG não inicializa** → verifique se há PDFs em `/pdfs`  
+- **LLM não responde** → teste com `curl http://localhost:8080/v1/models`  
+- **Resposta vazia** → aumente `max_tokens` ou ajuste `stop` tokens  
+- **Embeddings não gerados** → verifique `EMBEDDING_API_URL`  
 
-Usado para validação de entrada na rota /chat. 
- 
-📄 app/api/routes.py 
+---
 
-Rotas FastAPI: 
-GET / 
+## 📦 Dependências Principais
+- `fastapi`, `uvicorn` → servidor web  
+- `langchain`, `langchain-community` → RAG  
+- `pydantic-settings` → configurações  
+- `pypdf` → leitura de PDFs  
+- `loguru` → logging  
 
-    Retorna index.html
-     
+---
 
-POST /chat 
+## 🤝 Contribuição
+1. Fork o projeto  
+2. Crie sua branch (`git checkout -b feature/nova-funcao`)  
+3. Commit suas mudanças (`git commit -m 'Adiciona nova função'`)  
+4. Push (`git push origin feature/nova-funcao`)  
+5. Abra um Pull Request  
 
-    Recebe mensagem do usuário
-    Usa RAG para gerar resposta
-    Streaming caractere por caractere com SSE
-    Formato:  {"type": "chunk", "content": "Olá..."}
-     
+---
 
- 
-📄 app/utils/logger.py 
-
-Função: setup_logging() 
-
-    Configura loguru com cores e formato
-    Intercepta logs do logging padrão
-    Níveis: INFO, SUCCESS, WARNING, ERROR, CRITICAL
-     
-
- 
-📄 app/main.py 
-
-Função: create_app() 
-
-    Cria instância do FastAPI
-    Adiciona middlewares (CORS, sessão)
-    Monta rotas e arquivos estáticos
-    Inicia logger
-     
-
- 
-📄 main.py 
-
-Ponto de entrada: 
-
-    Importa app de app.main
-    Inicia Uvicorn
-    Porta: 8000
-    Reload: ativado em dev
-     
-
- 
-🖥️ Frontend (static/) 
-index.html 
-
-    Página principal com chat
-    Carrega CSS e JS
-    Usa EventSource para SSE
-     
-
-script.js 
-
-    Streaming de respostas
-    Renderiza Markdown com marked.js
-    Auto-resize do textarea
-    Indicador de digitação
-     
-
-style.css 
-
-    Design moderno com gradientes
-    Responsivo
-    Estilos para código, blocos, etc.
-     
-
- 
-⚙️ Variáveis de Ambiente (.env.example) 
+## 📄 Licença
+MIT  
