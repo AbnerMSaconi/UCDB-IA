@@ -75,7 +75,7 @@ async def chat(request: Request, body: ChatRequest):
                 resposta = "Olá! Como posso ajudar você hoje? 😊"
             else:
                 logger.info(f"💬 Pergunta: {body.message}")
-                result = rag_chain({"query": body.message})
+                result = rag_chain.invoke({"query": body.message})
                 raw = result.get("result", "").strip()
 
                 # Limpeza
