@@ -47,7 +47,7 @@ class LlamaServerLLM(LLM):
                     "frequency_penalty": 0.2,
                     "presence_penalty": 0.2
                 },
-                timeout=120
+                timeout=1200
             )
 
             if response.status_code != 200:
