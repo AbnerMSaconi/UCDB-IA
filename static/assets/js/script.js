@@ -133,7 +133,7 @@ async function sendMessage() {
           if (data.type === 'chunk') {
             buffer = data.content;
             aiDiv.innerHTML = marked.parse(buffer);
-            applyMarkdownStyles(aiDiv);
+            //applyMarkdownStyles(aiDiv);
             chat.scrollTop = chat.scrollHeight;
           }
           if (data.type === 'error') {

@@ -88,7 +88,7 @@ def criar_rag_chain(vectorstore):
     return RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
-        retriever=vectorstore.as_retriever(search_kwargs={"k": settings.RETRIEVAL_K}),
+        retriever=vectorstore.as_retriever(search_kwargs={"k": settings.RETRIEVAL_K, "fetch_k": 10}),
         chain_type_kwargs={"prompt": prompt},
         return_source_documents=False
     )

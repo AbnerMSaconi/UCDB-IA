@@ -82,7 +82,7 @@ async def chat(request: Request, body: ChatRequest):
                 if "Resposta:" in raw:
                     raw = raw.split("Resposta:")[-1].strip()
                 linhas = [l for l in raw.split('\n') if not l.startswith(("Okay,", "Parsing"))]
-                resposta = ' '.join(linhas).strip()
+                resposta = '\n'.join(linhas).strip()
                 if not resposta:
                     resposta = "Desculpe, não consegui gerar uma resposta."
 
