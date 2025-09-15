@@ -39,7 +39,7 @@ class LlamaServerLLM(LLM):
                     "max_tokens": settings.MAX_TOKENS,  # 2048
                     "top_p": settings.TOP_P,
                     "repeat_penalty": settings.REPETITION_PENALTY,
-                    "stop": stop or ["Pergunta:", "Resposta:", "Okay,"],
+                    "stop": stop or ["Pergunta:", "Resposta:", "|end|"],
                     "stream": False,
                     "top_k": 40,           # Adicione
                     "min_p": 0.05,         # Adicione
