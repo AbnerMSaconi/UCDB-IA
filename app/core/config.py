@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     # LLM
     LLM_BASE_URL: AnyHttpUrl = "http://localhost:8080/v1"
     EMBEDDING_API_URL: AnyHttpUrl = "http://localhost:8081/embedding"
-    MAX_TOKENS: int = 80000
-    TEMPERATURE: float = 0.8
+    MAX_TOKENS: int = 8192
+    TEMPERATURE: float = 0.65
     TOP_P: float = 0.9
     REPETITION_PENALTY: float = 1.1
 
