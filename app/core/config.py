@@ -2,12 +2,14 @@
 from pydantic_settings import SettingsConfigDict, BaseSettings
 from pydantic import DirectoryPath, AnyHttpUrl
 import os
+import secrets
 
 class Settings(BaseSettings):
     # API
     APP_NAME: str = "UCDB Chat"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
+    SECRET_KEY: str = secrets.token_hex(32) # Gera uma chave segura por defeito
 
     # LLM
     LLM_BASE_URL: AnyHttpUrl = "http://localhost:8080/v1"
@@ -24,10 +26,7 @@ class Settings(BaseSettings):
 
     # Paths
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    PDF_DIR: DirectoryPath
-    VECTORSTORE_DIR: str
-    STATIC_DIR: DirectoryPath
-
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
@@ -42,14 +41,12 @@ class Settings(BaseSettings):
 
     @property
     def pdf_path(self) -> str:
-        return os.path.join(self.BASE_DIR, "pdfs")
+        path = os.path.join(self.BASE_DIR, "pdfs")
+        os.makedirs(path, exist_ok=True)
+        return path
 
     @property
     def static_path(self) -> str:
         return os.path.join(self.BASE_DIR, "static")
 
-settings = Settings(
-    PDF_DIR=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "pdfs"),
-    VECTORSTORE_DIR=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "embeddings"),
-    STATIC_DIR=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "static")
-)
+settings = Settings()
