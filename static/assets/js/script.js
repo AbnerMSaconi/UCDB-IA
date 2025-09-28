@@ -1,4 +1,4 @@
-// static/assets/js/script.js - Versão Refatorada e Corrigida
+// static/assets/js/script.js - Versão com Suporte a LaTeX (MathJax)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Elementos do DOM ---
@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message ${role}`;
 
-        // Adiciona o cabeçalho "UCDB" apenas para mensagens da IA
         if (role === 'ai') {
             messageWrapper.innerHTML = `
                 <div class="ai-header">🤖 UCDB</div>
@@ -82,13 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = messageInput.value.trim();
         if (!text) return;
 
-        // Adiciona a mensagem do utilizador e limpa o input
         addMessage('user', text);
         messageInput.value = '';
         messageInput.style.height = 'auto';
         sendButton.disabled = true;
 
-        // Mostra o indicador de digitação
         const typingIndicator = showTypingIndicator();
         
         let aiMessageElement;
@@ -105,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`Erro de rede: ${response.statusText}`);
             }
             
-            // Remove o indicador e prepara o contentor da mensagem da IA
             hideTypingIndicator();
             aiMessageElement = addMessage('ai');
             const aiContentDiv = aiMessageElement.querySelector('.content');
@@ -131,6 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (data.type === 'chunk') {
                             responseBuffer = data.content;
                             aiContentDiv.innerHTML = marked.parse(responseBuffer);
+                            
+                            // <-- ALTERAÇÃO IMPORTANTE AQUI -->
+                            // Pede ao MathJax para procurar e renderizar a matemática no elemento atualizado
+                            MathJax.typesetPromise([aiContentDiv]).catch((err) => console.log('Erro ao renderizar MathJax:', err));
+                            
                             scrollToBottom();
                         } else if (data.type === 'sources' && data.content.length > 0) {
                             const sourcesContainer = aiMessageElement.querySelector('.sources-container');
@@ -152,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             hideTypingIndicator();
-            // Se a mensagem da IA já foi criada, mostra o erro nela, senão, cria uma nova.
             if (aiMessageElement) {
                 aiMessageElement.querySelector('.content').innerHTML = `<p class="error">❌ Erro na comunicação com o servidor: ${error.message}</p>`;
             } else {
@@ -167,10 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
 
-    // Enviar com o botão
     sendButton.addEventListener('click', handleSendMessage);
-
-    // Enviar com Enter (sem Shift)
     messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -178,12 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Auto-resize do textarea
     messageInput.addEventListener('input', () => {
         messageInput.style.height = 'auto';
         messageInput.style.height = `${Math.min(messageInput.scrollHeight, 150)}px`;
     });
 
-    // Foco inicial no input
     messageInput.focus();
 });

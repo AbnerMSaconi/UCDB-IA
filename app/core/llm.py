@@ -1,4 +1,4 @@
-# app/core/llm.py
+# app/core/llm.py - Versão com Stop Token Atualizado
 from langchain_core.language_models.llms import LLM
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from typing import Any, List, Optional
@@ -18,34 +18,42 @@ class LlamaServerLLM(LLM):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> str:
+ 
         try:
             logger.info(f"→ Enviando prompt ({len(prompt)} chars)")
             
             # Garanta que o LLM está acessível
             try:
                 health = requests.get(f"{settings.LLM_BASE_URL}/models", timeout=5)
+                
                 if health.status_code != 200:
                     logger.critical("🛑 LLM não está saudável")
                     raise Exception("LLM não respondeu em /models")
             except Exception as e:
                 logger.critical(f"🛑 LLM não acessível: {e}")
+             
                 raise Exception("LLM não está rodando em http://localhost:8080")
+
+            # --- LISTA DE STOP TOKENS ATUALIZADA ---
+            stop_tokens = stop or ["Pergunta:", "Resposta:", "|end|", "<<EOT>>"]
 
             response = requests.post(
                 f"{settings.LLM_BASE_URL}/completions",
                 json={
                     "prompt": prompt,
                     "temperature": settings.TEMPERATURE,
-                    "max_tokens": settings.MAX_TOKENS,  # 2048
+   
+                    "max_tokens": settings.MAX_TOKENS,
                     "top_p": settings.TOP_P,
                     "repeat_penalty": settings.REPETITION_PENALTY,
-                    "stop": stop or ["Pergunta:", "Resposta:", "|end|"],
+                    "stop": stop_tokens, # <-- ALTERAÇÃO IMPORTANTE AQUI
+            
                     "stream": False,
-                    "top_k": 40,           # Adicione
-                    "min_p": 0.05,         # Adicione
-                    "typical_p": 1.0,      # Adicione
-                    "frequency_penalty": 0.2,
-                    "presence_penalty": 0.2
+                    "top_k": 40,
+                    "min_p": 0.05,
+                    "typical_p": 1.0,
+                    "frequency_penalty": 0.0, # Zerado para evitar que penalize a repetição de termos técnicos
+                    "presence_penalty": 0.0   # Zerado para evitar que penalize a repetição de termos técnicos
                 },
                 timeout=1200
             )
@@ -56,7 +64,6 @@ class LlamaServerLLM(LLM):
 
             data = response.json()
             
-            # Verifique se há tokens gerados
             if "choices" not in data or len(data["choices"]) == 0:
                 logger.error("❌ Resposta sem 'choices'")
                 return "Erro: resposta vazia do LLM"
@@ -75,6 +82,7 @@ class LlamaServerLLM(LLM):
             raise Exception("LLM não está respondendo")
         except Exception as e:
             logger.error(f"❌ Erro no LLM: {e}")
+          
             raise Exception(f"Erro ao chamar LLM: {str(e)}")
 
     @property

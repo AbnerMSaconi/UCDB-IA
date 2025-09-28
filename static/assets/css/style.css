@@ -23,7 +23,7 @@ body {
   background-color: #003366; /* Azul institucional da UCDB */
   padding: 1rem;
   text-align: center;
-  border-bottom: 4px solid #a40f0f; /* Laranja institucional da UCDB */
+  border-bottom: 4px solid #a10202; /* Laranja institucional da UCDB */
 }
 
 .header h1 {
@@ -57,7 +57,7 @@ body {
 /* Mensagem do Utilizador */
 .user { 
   align-self: flex-end;
-  background-color: #a40f0f; /* Laranja institucional */
+  background-color: #a10202; /* Laranja institucional */
   color: #ffffff; 
   border-bottom-right-radius: 2px;
 }
@@ -168,7 +168,7 @@ body {
   padding: 1rem;
   border-radius: 4px;
   margin: 0.8rem 0;
-  border-left: 4px solid #a40f0f; /* Laranja como destaque */
+  border-left: 4px solid #a10202; /* Laranja como destaque */
   overflow-x: auto;
 }
 
