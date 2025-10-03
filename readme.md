@@ -168,4 +168,11 @@ Contribuições são bem-vindas\! Se encontrar um bug ou tiver uma sugestão, po
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a Licença MIT.
+Este projeto está licenciado sob a **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**.
+
+![CC BY-NC 4.0](https://i.creativecommons.org/l/by-nc/4.0/88x31.png)
+
+Isto significa que você é livre para partilhar e adaptar este trabalho para **fins não comerciais**, desde que dê o crédito apropriado aos criadores originais.
+
+**Uso Comercial:**
+O uso deste software em projetos ou produtos comerciais é estritamente proibido sob esta licença. Para obter uma licença comercial, por favor, entre em contacto com a equipa de desenvolvimento.
