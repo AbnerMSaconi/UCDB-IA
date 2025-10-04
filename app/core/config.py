@@ -1,4 +1,5 @@
-# app/core/config.py
+# app/core/config.py - Versão com Penalidade de Repetição Aumentada
+
 from pydantic_settings import SettingsConfigDict, BaseSettings
 from pydantic import DirectoryPath, AnyHttpUrl
 import os
@@ -9,20 +10,20 @@ class Settings(BaseSettings):
     APP_NAME: str = "UCDB Chat"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
-    SECRET_KEY: str = secrets.token_hex(32) # Gera uma chave segura por defeito
+    SECRET_KEY: str = secrets.token_hex(32)
 
     # LLM
     LLM_BASE_URL: AnyHttpUrl = "http://localhost:8080/v1"
     EMBEDDING_API_URL: AnyHttpUrl = "http://localhost:8081/embedding"
-    MAX_TOKENS: int = 8192
-    TEMPERATURE: float = 0.65
+    MAX_TOKENS: int = 15500
+    TEMPERATURE: float = 0.85  # Reduzir um pouco a temperatura pode ajudar na consistência
     TOP_P: float = 0.9
-    REPETITION_PENALTY: float = 1.1
+    REPETITION_PENALTY: float = 1  # <-- PREVENIR LOOPS
 
     # RAG
     CHUNK_SIZE: int = 812
     CHUNK_OVERLAP: int = 64
-    RETRIEVAL_K: int = 4
+    RETRIEVAL_K: int = 7 # Aumentar ligeiramente para mais contexto
 
     # Paths
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

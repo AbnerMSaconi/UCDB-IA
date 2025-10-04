@@ -1,4 +1,4 @@
-// static/assets/js/script.js - Versão com Suporte a LaTeX (MathJax)
+// static/assets/js/script.js - Versão com Mensagem de Boas-Vindas Dinâmica
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Elementos do DOM ---
@@ -6,7 +6,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageInput = document.getElementById('message');
     const sendButton = document.getElementById('send');
 
-    // --- Funções Auxiliares ---
+    /**
+     * Mostra a mensagem inicial de boas-vindas.
+     */
+    async function showWelcomeMessage() {
+        showTypingIndicator(); // Mostra o indicador enquanto carrega as áreas
+        try {
+            const response = await fetch('/knowledge-areas');
+            if (!response.ok) {
+                throw new Error('Não foi possível obter as áreas de conhecimento.');
+            }
+            const data = await response.json();
+            const areas = data.areas;
+
+            let welcomeText = "Olá, sou o **UCDB-IA**, um assistente de estudos acadêmicos.";
+
+            if (areas && areas.length > 0) {
+                welcomeText += "\n\nAtualmente, tenho domínio sobre as seguintes áreas de conhecimento:\n\n";
+                const areaList = areas.map(area => `- ${area}`).join('\n');
+                welcomeText += areaList;
+            } else {
+                welcomeText += "\n\nNo momento, não tenho nenhum documento em minha base de conhecimento. Por favor, adicione arquivos PDF na pasta `/pdfs` e reinicie o sistema para que eu possa aprender sobre eles.";
+            }
+            
+            welcomeText += "\n\nComo posso ajudar?";
+            
+            hideTypingIndicator();
+            addMessage('ai', welcomeText);
+
+        } catch (error) {
+            hideTypingIndicator();
+            console.error("Erro ao carregar mensagem de boas-vindas:", error);
+            addMessage('ai', "Olá, sou o **UCDB-IA**. Não consegui carregar minha base de conhecimento, mas estou pronto para ajudar como puder.");
+        }
+    }
+
+
+    // --- Funções Auxiliares (O restante das funções permanece o mesmo) ---
 
     /**
      * Adiciona uma mensagem à interface do chat.
@@ -25,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="sources-container" style="display: none;"></div>
             `;
             if (content) {
+                // Usamos marked.parse para renderizar o Markdown da mensagem de boas-vindas
                 messageWrapper.querySelector('.content').innerHTML = marked.parse(content);
             }
         } else {
@@ -180,5 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageInput.style.height = `${Math.min(messageInput.scrollHeight, 150)}px`;
     });
 
+    // --- Inicialização ---
+    showWelcomeMessage(); // Chama a nova função para exibir a mensagem de boas-vindas
     messageInput.focus();
 });

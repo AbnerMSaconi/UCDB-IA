@@ -1,4 +1,5 @@
-# app/core/llm.py - Versão com Stop Token Atualizado
+# app/core/llm.py - Versão com Stop Tokens Otimizados para Llama 3
+
 from langchain_core.language_models.llms import LLM
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from typing import Any, List, Optional
@@ -22,68 +23,45 @@ class LlamaServerLLM(LLM):
         try:
             logger.info(f"→ Enviando prompt ({len(prompt)} chars)")
             
-            # Garanta que o LLM está acessível
-            try:
-                health = requests.get(f"{settings.LLM_BASE_URL}/models", timeout=5)
-                
-                if health.status_code != 200:
-                    logger.critical("🛑 LLM não está saudável")
-                    raise Exception("LLM não respondeu em /models")
-            except Exception as e:
-                logger.critical(f"🛑 LLM não acessível: {e}")
-             
-                raise Exception("LLM não está rodando em http://localhost:8080")
-
-            # --- LISTA DE STOP TOKENS ATUALIZADA ---
-            stop_tokens = stop or ["Pergunta:", "Resposta:", "|end|", "<<EOT>>"]
+            # --- LISTA DE STOP TOKENS CORRIGIDA E OTIMIZADA PARA LLAMA 3 ---
+            stop_tokens = stop or [
+                "<|eot_id|>",
+                "<|end_of_text|>",
+                "<|start_header_id|>"
+            ]
 
             response = requests.post(
                 f"{settings.LLM_BASE_URL}/completions",
                 json={
                     "prompt": prompt,
                     "temperature": settings.TEMPERATURE,
-   
                     "max_tokens": settings.MAX_TOKENS,
                     "top_p": settings.TOP_P,
                     "repeat_penalty": settings.REPETITION_PENALTY,
-                    "stop": stop_tokens, # <-- ALTERAÇÃO IMPORTANTE AQUI
-            
+                    "stop": stop_tokens,
                     "stream": False,
-                    "top_k": 40,
-                    "min_p": 0.05,
-                    "typical_p": 1.0,
-                    "frequency_penalty": 0.0, # Zerado para evitar que penalize a repetição de termos técnicos
-                    "presence_penalty": 0.0   # Zerado para evitar que penalize a repetição de termos técnicos
                 },
-                timeout=1200
+                timeout=120
             )
 
-            if response.status_code != 200:
-                logger.error(f"❌ HTTP {response.status_code}: {response.text}")
-                raise Exception(f"Erro HTTP: {response.status_code}")
-
+            response.raise_for_status()
             data = response.json()
-            
-            if "choices" not in data or len(data["choices"]) == 0:
-                logger.error("❌ Resposta sem 'choices'")
-                return "Erro: resposta vazia do LLM"
-
             text = data["choices"][0]["text"].strip()
             
             if not text:
                 logger.warning("⚠️ LLM retornou texto vazio")
-                return "Desculpe, o modelo não gerou uma resposta."
+                # Retornamos uma string vazia para a API tratar a mensagem de erro padrão
+                return ""
 
             logger.info(f"← Resposta recebida ({len(text)} chars)")
             return text
 
-        except requests.exceptions.ConnectionError:
-            logger.critical("🛑 LLM não acessível. Verifique se está rodando em http://localhost:8080")
-            raise Exception("LLM não está respondendo")
+        except requests.exceptions.RequestException as e:
+            logger.critical(f"🛑 LLM não acessível em {settings.LLM_BASE_URL}. Erro: {e}")
+            raise Exception("LLM não está respondendo. Verifique se o servidor llama.cpp está em execução.")
         except Exception as e:
-            logger.error(f"❌ Erro no LLM: {e}")
-          
-            raise Exception(f"Erro ao chamar LLM: {str(e)}")
+            logger.error(f"❌ Erro na chamada ao LLM: {e}")
+            raise
 
     @property
     def _identifying_params(self) -> dict[str, Any]:
