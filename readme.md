@@ -1,4 +1,4 @@
-# UCDB Chat 🧠💬
+# UCDB-IA 🧠💬
 
 Bem-vindo ao UCDB Chat, um assistente de estudos académico inteligente, projetado para responder a perguntas complexas com base num conjunto de documentos PDF fornecidos. Este projeto utiliza uma arquitetura **RAG (Retrieval-Augmented Generation)** para combinar o poder de um Modelo de Linguagem Grande (LLM) local com a informação específica dos seus documentos.
 
@@ -280,15 +280,3 @@ Pode ajustar o comportamento do LLM editando o ficheiro `app/core/config.py`.
   * `REPETITION_PENALTY`: Aumente este valor (ex: `1.2`) se notar que o modelo está a repetir-se.
   * `TEMPERATURE`: Aumente para respostas mais criativas, diminua (ex: `0.5`) para respostas mais factuais e diretas.
   * `RETRIEVAL_K`: O número de *chunks* de texto a serem recuperados dos documentos para cada pergunta. Um valor entre 4 e 6 é geralmente ideal.
-
-
-## 📄 Licença
-
-Este projeto está licenciado sob a **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**.
-
-![CC BY-NC 4.0](https://i.creativecommons.org/l/by-nc/4.0/88x31.png)
-
-Isto significa que você é livre para partilhar e adaptar este trabalho para **fins não comerciais**, desde que dê o crédito apropriado aos criadores originais.
-
-**Uso Comercial:**
-O uso deste software em projetos ou produtos comerciais é estritamente proibido sob esta licença. Para obter uma licença comercial, por favor, entre em contacto com a equipa de desenvolvimento.
