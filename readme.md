@@ -1,5 +1,3 @@
------
-
 # UCDB Chat 🧠💬
 
 Bem-vindo ao UCDB Chat, um assistente de estudos académico inteligente, projetado para responder a perguntas complexas com base num conjunto de documentos PDF fornecidos. Este projeto utiliza uma arquitetura **RAG (Retrieval-Augmented Generation)** para combinar o poder de um Modelo de Linguagem Grande (LLM) local com a informação específica dos seus documentos.
@@ -21,7 +19,6 @@ Bem-vindo ao UCDB Chat, um assistente de estudos académico inteligente, projeta
   * **Servidor de Inferência:** LLaMA.cpp
 
 ## 📂 Estrutura do Projeto
-\n---\n\n## 📦 Backend\n\n### `main.py` (raiz)\nResponsável por inicializar o servidor FastAPI.\n\n**Funções principais:**\n- Importa `app.main` e executa a aplicação.\n- Configura CORS e rota raiz.\n\n**Exemplo de execução:**\n```bash\npython main.py\n```\n\n---\n\n### `app/main.py`\nArquivo central da aplicação.\n\n**Funções e componentes:**\n- Cria instância do FastAPI.\n- Inclui as rotas definidas em `app/api/routes.py`.\n- Carrega configurações globais (porta, host, etc.).\n- Inicializa logs.\n\n---\n\n### `app/api/routes.py`\nDefine as rotas da API (endpoints) utilizadas pelo frontend.\n\n**Principais rotas:**\n| Método | Rota     | Função              | Descrição                                      |\n|--------|----------|---------------------|------------------------------------------------|\n| GET    | `/`      | `root()`            | Retorna status inicial da API.                 |\n| POST   | `/ask`   | `ask_question()`    | Processa pergunta via RAG e retorna resposta.  |\n| POST   | `/upload`| `upload_pdf()`      | Recebe PDFs e atualiza o índice vetorial.      |\n\n**Fluxo interno:**\n- Recebe JSON do frontend.\n- Chama `rag.query(question)` para gerar resposta.\n- Retorna objeto contendo a resposta e fontes relevantes.\n\n---\n\n### `app/api/schemas.py`\nDefine os modelos de dados utilizados pela API via Pydantic.\n\n**Classes principais:**\n```python\nclass QueryRequest(BaseModel):\n    question: str\n\nclass QueryResponse(BaseModel):\n    answer: str\n    sources: list[str]\n\nclass UploadResponse(BaseModel):\n    message: str\n```\nEsses modelos garantem tipagem forte e validação automática das requisições.\n\n---\n\n### `app/api/models.py`\nEstrutura para futuras expansões de persistência de dados, como:\n- Histórico de conversas\n- Referência de documentos indexados\n- Configurações de sessão\n\n---\n\n### `app/core/config.py`\nGerencia todas as configurações globais do sistema.\n\n**Principais parâmetros:**\n- `TEMPERATURE`: controle da criatividade do modelo\n- `RETRIEVAL_K`: quantidade de trechos recuperados\n- `EMBEDDING_URL`: endereço do servidor de embeddings\n- `LLM_URL`: endereço do modelo LLaMA local\n- `LOG_DIR`: diretório de logs\n\nAs variáveis são carregadas via `.env` ou valores padrão.\n\n---\n\n### `app/core/embeddings.py`\nImplementa a geração e o gerenciamento de embeddings para os documentos.\n\n**Funções principais:**\n```python\ndef embed_text(text: str) -> np.ndarray:\n    """\n    Envia o texto para o servidor de embeddings e retorna o vetor gerado.\n    """\n\ndef index_documents(pdf_folder: str):\n    """\n    Extrai texto dos PDFs, cria embeddings e salva na base FAISS.\n    """\n\ndef retrieve_similar(query_vector, k=5):\n    """\n    Busca os vetores mais próximos no índice FAISS com base na consulta.\n    """\n```\n**Fluxo:**\n- Extrai texto dos PDFs\n- Divide em chunks\n- Cria embeddings via servidor local\n- Salva os vetores em FAISS (`.index`)\n- Usa busca vetorial durante a consulta\n\n---\n\n### `app/core/llm.py`\nGerencia a comunicação com o modelo de linguagem LLaMA via servidor REST local.\n\n**Função principal:**\n```python\ndef generate(prompt: str) -> str:\n    """\n    Envia prompt ao servidor LLaMA e retorna a resposta gerada.\n    """\n```\n**Mecanismos de controle:**\n- `temperature`\n- `top_p`\n- `max_tokens`\n- `repetition_penalty`\n\n---\n\n### `app/core/rag.py`\nNúcleo do sistema RAG (Retrieval-Augmented Generation).\n\n**Função principal:**\n```python\ndef query(question: str) -> dict:\n    """\n    Executa o pipeline completo:\n    1. Gera embedding da pergunta.\n    2. Busca trechos relevantes na base FAISS.\n    3. Constrói prompt contextualizado.\n    4. Chama o modelo LLaMA.\n    5. Retorna a resposta e fontes.\n    """\n```\n**Estrutura:**\n- Combina módulos `embeddings.py` e `llm.py`\n- Usa logs e streaming\n- Garante contexto atualizado conforme PDFs enviados\n\n---\n\n### `app/utils/logger.py`\nGerencia o sistema de logs do projeto.\n\n```python\ndef get_logger(name):\n    """\n    Retorna um logger configurado para o módulo solicitado.\n    """\n```\nCada módulo cria seu próprio logger, salvando registros no diretório `logs/` com timestamp.\n\n---\n\n### `app/utils/streaming.py`\nResponsável pelo streaming de respostas (envio em tempo real ao frontend).\n\nPermite que a resposta do LLaMA seja exibida enquanto é gerada, simulando comportamento de chat contínuo.\n\n---\n\n## 💻 Frontend\n\nLocalizado em `static/`.\n\n### `index.html`\nEstrutura da interface principal do chat.\n\n**Elementos principais:**\n- Caixa de chat com mensagens do usuário e da IA\n- Campo de texto e botão “Enviar”\n- Componente para upload de PDFs\n- Conecta-se à API via JavaScript (`fetch`)\n\n---\n\n### `assets/css/style.css`\nDefine o estilo da interface:\n- Layout responsivo\n- Cores neutras (tema acadêmico)\n- Estilo de bolhas de chat\n- Animações leves de digitação\n\n---\n\n### `assets/js/script.js`\nGerencia toda a lógica de interação do frontend.\n\n**Funções principais:**\n```javascript\nasync function sendMessage() {\n  // Lê a mensagem do usuário\n  // Exibe no chat\n  // Envia via POST /ask\n  // Exibe a resposta retornada pela API\n}\n\nasync function uploadPDF(file) {\n  // Envia arquivo para /upload\n  // Atualiza índice FAISS no servidor\n}\n```\n**Outros comportamentos:**\n- Scroll automático do chat\n- Exibição de mensagens do sistema\n- Renderização de Markdown e LaTeX\n
 
 ```
 ucdb-ia/
@@ -49,7 +46,124 @@ ucdb-ia/
 └── requirements.txt        # Dependências Python
 ```
 
------
+
+### Diretório `app/` - O Coração da Aplicação
+
+#### `app/main.py`
+Este ficheiro é responsável por criar e configurar a instância principal da aplicação FastAPI.
+
+`create_app() -> FastAPI:`
+- Responsabilidade: Inicializa a aplicação.
+- Ações:
+  - Chama `setup_logging()` para configurar o sistema de logs.
+  - Cria a instância do FastAPI.
+  - Adiciona `SessionMiddleware` para gerir sessões de utilizador e o histórico de conversas.
+  - Adiciona `CORSMiddleware` para permitir que o frontend (a correr em `localhost:8000`) se comunique com o backend.
+  - Inclui as rotas definidas em `app.api.routes`.
+  - Configura o diretório `static/` para servir os ficheiros do frontend (HTML, CSS, JS).
+
+`startup()`:
+- Responsabilidade: Executa uma ação quando a aplicação arranca.
+- Ações: Regista uma mensagem informativa no log a indicar que o servidor foi iniciado.
+
+#### `app/core/config.py`
+Este ficheiro centraliza todas as configurações da aplicação usando a biblioteca Pydantic.
+
+`class Settings(BaseSettings):`
+- Responsabilidade: Define e carrega todas as variáveis de configuração a partir de um ficheiro `.env` ou de valores padrão.
+- Parâmetros Principais:
+  - `LLM_BASE_URL`: O endereço do servidor `llama-server`.
+  - `MAX_TOKENS`: O número máximo de tokens que o LLM pode gerar numa única resposta.
+  - `TEMPERATURE`, `TOP_P`, `REPETITION_PENALTY`: Parâmetros que controlam a criatividade, diversidade e o nível de repetição das respostas do LLM.
+  - `CHUNK_SIZE`, `CHUNK_OVERLAP`: Define o tamanho dos pedaços de texto e a sobreposição entre eles durante a indexação dos PDFs.
+- Propriedades (`@property`):
+  - `vectorstore_path`, `pdf_path`, `static_path`: Funções que geram os caminhos absolutos para os diretórios importantes, garantindo que as pastas são criadas se não existirem.
+
+#### `app/core/llm.py`
+Este ficheiro contém a classe que se integra com o servidor `llama.cpp`.
+
+`class LlamaServerLLM(LLM):`
+- Responsabilidade: Implementa a interface da LangChain para um LLM, permitindo que a nossa aplicação se comunique com o `llama-server`.
+
+`_call(...) -> str:`
+- Ações:
+  - Define a lista de `stop_tokens`, que são palavras ou símbolos que indicam ao LLM para parar de gerar texto.
+  - Envia um pedido POST para o endpoint `/completions` do `llama-server`, contendo o prompt e todos os parâmetros de geração definidos no `config.py`.
+  - Processa a resposta JSON, extrai o texto gerado e retorna-o.
+
+#### `app/core/embeddings.py`
+Semelhante ao `llm.py`, este ficheiro integra-se com o servidor `llama.cpp` para gerar embeddings.
+
+`class LlamaEmbeddings(Embeddings):`
+- Responsabilidade: Implementa a interface da LangChain para um modelo de embedding.
+- `embed_documents(...)`: Recebe uma lista de textos e faz um pedido ao servidor de embeddings para converter cada texto num vetor.
+- `embed_query(...)`: Recebe uma única string (a pergunta do utilizador) e converte-a num vetor.
+
+#### `app/core/rag.py`
+Este é o ficheiro mais importante, onde toda a lógica do RAG é implementada.
+
+`_gerar_titulo_para_documento(...)`:
+- Responsabilidade: Usa o LLM para ler o início de um novo PDF e gerar um título descritivo que represente a sua área de conhecimento.
+
+`_carregar_manifesto(...)` e `_salvar_manifesto(...)`:
+- Responsabilidade: Funções auxiliares para ler e escrever no ficheiro `manifest.json`, que armazena a relação entre os nomes dos ficheiros PDF e os seus títulos gerados.
+
+`_processar_novos_pdfs(...)`:
+- Responsabilidade: Carrega novos PDFs, gera os seus títulos e divide o seu conteúdo em chunks.
+
+`criar_vectorstore()`:
+- Responsabilidade: Orquestra a criação ou atualização da base de dados vetorial FAISS.
+- Ações:
+  - Verifica se existem novos PDFs na pasta `/pdfs` que ainda não foram processados.
+  - Se a base de dados já existe, carrega-a e adiciona apenas os novos documentos.
+  - Se não existe, processa todos os PDFs, gera os seus embeddings e salva a nova base de dados na pasta `/embeddings`.
+
+`criar_rag_chain(...)`:
+- Responsabilidade: Cria e configura o `ConversationalRetrievalChain` da LangChain.
+- Ações:
+  - Define o `qa_template`, que é o prompt detalhado com todas as instruções para o LLM.
+  - Instancia o `LlamaServerLLM`.
+  - Configura o retriever para usar a base de dados FAISS.
+  - Monta e retorna a chain completa, pronta a ser usada.
+
+#### `app/api/routes.py`
+Define os endpoints da API que o frontend utiliza.
+
+`_initialize_rag()`:
+- Responsabilidade: Função de inicialização que garante que o sistema RAG (a base de dados vetorial e a chain) é carregado apenas uma vez quando a aplicação arranca.
+
+`@router.get("/")`:
+- Responsabilidade: Serve a página principal da aplicação (`index.html`).
+
+`@router.get("/knowledge-areas")`:
+- Responsabilidade: Fornece ao frontend a lista de áreas de conhecimento (os títulos dos PDFs processados) a partir do ficheiro `manifest.json`.
+
+`@router.post("/chat")`:
+- Responsabilidade: É o endpoint principal que lida com a conversa do chat.
+- Ações:
+  - Recebe a mensagem do utilizador.
+  - Recupera o histórico da conversa da sessão do utilizador.
+  - Chama a `rag_chain` com a pergunta e o histórico.
+  - Aplica funções de limpeza (`_limpar_resposta_llm`, `_remover_duplicacao`) para corrigir possíveis erros na resposta do LLM.
+  - Envia a resposta final e as fontes para o frontend através de `StreamingResponse`.
+
+#### `app/utils/logger.py`
+Configura um sistema de logging robusto com a biblioteca Loguru.
+
+`setup_logging()`:
+- Responsabilidade: Define o formato, o nível (DEBUG, INFO, ERROR) e o destino dos logs (a consola e ficheiros no diretório `logs/`).
+
+### Diretório `static/` - A Interface do Utilizador
+
+`index.html`: A estrutura base da página do chat, que inclui a área de mensagens e o campo de introdução de texto.
+
+`assets/css/style.css`: Contém todo o estilo visual da aplicação, definindo as cores, fontes e o layout dos elementos.
+
+`assets/js/script.js`: Contém toda a lógica do frontend.
+- `showWelcomeMessage()`: Ao carregar a página, faz um pedido ao endpoint `/knowledge-areas` e exibe a mensagem de boas-vindas com a lista de tópicos.
+- `handleSendMessage()`: É chamada quando o utilizador clica em "Enviar". Envia a pergunta para o endpoint `/chat` e processa a resposta em stream, atualizando a interface à medida que o texto chega.
+- Utiliza a biblioteca `marked.js` para converter o Markdown recebido do backend em HTML e o `MathJax` para renderizar fórmulas matemáticas.
+
 
 ## 🚀 Tutorial de Instalação e Execução
 
@@ -120,7 +234,10 @@ Este servidor é responsável por converter texto em vetores numéricos.
 ```bash
 # Inicie o servidor de embedding na porta 8081
 # (substitua pelo nome do seu modelo de embedding, se for diferente)
-llama-server -m seu-modelo-de-embedding.gguf -e -ngl 100 --port 8081
+llama-server -m seu-modelo-de-embedding.gguf --embeddings -ngl 100 --port 8081
+# Caso queira reservar VRAM 
+llama-server -m seu-modelo-de-embedding.gguf --embeddings -ngl 0 --port 8081
+# Não é necessário processar os PDFs instantâneamente.
 ```
 
 #### Terminal 2: Servidor do LLM (O Cérebro)
@@ -130,11 +247,12 @@ Este é o modelo principal que irá gerar as respostas. Recomenda-se o **Llama-3
 ```bash
 # Inicie o servidor do LLM na porta 8080
 # Substitua pelo caminho do seu modelo .gguf
-llama-server -m ./Meta-Llama-3-8B-Instruct.Q4_K_M.gguf -c 8192 -ngl 100 --flash-attn
+llama-server -m ./Meta-Llama-3-8B-Instruct.Q4_K_M.gguf -c 8192 -ngl 100 -fa 1
 ```
 
   * `-c 8192`: Define o tamanho do contexto para 8192 tokens, permitindo respostas mais longas.
   * `-ngl 100`: Descarrega o máximo de camadas para a GPU, garantindo a máxima velocidade.
+  * `-fa 1`: FlashAttention, otimização que visa acelerar o processo de inferência e reduzir o consumo de memória da GPU, especialmente com sequências de texto longas.
 
 #### Terminal 3: Aplicação UCDB Chat
 
@@ -151,7 +269,7 @@ Após iniciar os três servidores, abra o seu navegador e aceda a:
 
 **http://localhost:8000**
 
-Na primeira execução, o sistema irá processar e indexar todos os PDFs. Este processo pode demorar alguns minutos, dependendo do número de documentos. Você pode acompanhar o progresso nos logs do terminal onde a aplicação Python está a ser executada. Após a conclusão, o chat estará pronto a ser usado\!
+Na primeira execução, o sistema irá processar e indexar todos os PDFs. Este processo pode demorar alguns minutos, dependendo do número de documentos. Você pode acompanhar o progresso nos logs do terminal onde a aplicação Python está a ser executada. Após a conclusão, o chat estará pronto a ser usado!
 
 -----
 
@@ -163,9 +281,6 @@ Pode ajustar o comportamento do LLM editando o ficheiro `app/core/config.py`.
   * `TEMPERATURE`: Aumente para respostas mais criativas, diminua (ex: `0.5`) para respostas mais factuais e diretas.
   * `RETRIEVAL_K`: O número de *chunks* de texto a serem recuperados dos documentos para cada pergunta. Um valor entre 4 e 6 é geralmente ideal.
 
-## 🤝 Contribuição
-
-Contribuições são bem-vindas\! Se encontrar um bug ou tiver uma sugestão, por favor, abra uma *issue* no repositório.
 
 ## 📄 Licença
 
