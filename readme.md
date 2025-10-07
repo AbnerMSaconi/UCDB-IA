@@ -119,7 +119,10 @@ Este servidor é responsável por converter texto em vetores numéricos.
 ```bash
 # Inicie o servidor de embedding na porta 8081
 # (substitua pelo nome do seu modelo de embedding, se for diferente)
-llama-server -m seu-modelo-de-embedding.gguf -e -ngl 100 --port 8081
+llama-server -m seu-modelo-de-embedding.gguf --embeddings -ngl 100 --port 8081
+# Caso queira reservar VRAM 
+llama-server -m seu-modelo-de-embedding.gguf --embeddings -ngl 0 --port 8081
+# Não é necessário processar os PDFs instantâneamente.
 ```
 
 #### Terminal 2: Servidor do LLM (O Cérebro)
@@ -129,11 +132,12 @@ Este é o modelo principal que irá gerar as respostas. Recomenda-se o **Llama-3
 ```bash
 # Inicie o servidor do LLM na porta 8080
 # Substitua pelo caminho do seu modelo .gguf
-llama-server -m ./Meta-Llama-3-8B-Instruct.Q4_K_M.gguf -c 8192 -ngl 100 --flash-attn
+llama-server -m ./Meta-Llama-3-8B-Instruct.Q4_K_M.gguf -c 8192 -ngl 100 -fa 1
 ```
 
   * `-c 8192`: Define o tamanho do contexto para 8192 tokens, permitindo respostas mais longas.
   * `-ngl 100`: Descarrega o máximo de camadas para a GPU, garantindo a máxima velocidade.
+  * `-fa 1`: FlashAttention, otimização que visa acelerar o processo de inferência e reduzir o consumo de memória da GPU, especialmente com sequências de texto longas.
 
 #### Terminal 3: Aplicação UCDB Chat
 
@@ -162,9 +166,6 @@ Pode ajustar o comportamento do LLM editando o ficheiro `app/core/config.py`.
   * `TEMPERATURE`: Aumente para respostas mais criativas, diminua (ex: `0.5`) para respostas mais factuais e diretas.
   * `RETRIEVAL_K`: O número de *chunks* de texto a serem recuperados dos documentos para cada pergunta. Um valor entre 4 e 6 é geralmente ideal.
 
-## 🤝 Contribuição
-
-Contribuições são bem-vindas\! Se encontrar um bug ou tiver uma sugestão, por favor, abra uma *issue* no repositório.
 
 ## 📄 Licença
 
