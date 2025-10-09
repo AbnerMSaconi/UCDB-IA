@@ -1,4 +1,4 @@
-# app/api/routes.py - Versão com Streaming Robusto
+# app/api/routes.py - Versão com Correção Automática de LaTeX
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, FileResponse
@@ -18,7 +18,6 @@ _rag_chain = None
 _initialized = False
 _initialization_failed = False
 
-# As funções de limpeza e inicialização não necessitam de alterações
 def _limpar_resposta_llm(texto: str) -> str:
     if not texto: return ""
     texto_limpo = re.sub(r'^[^\w\s]*\s*$', '', texto, flags=re.MULTILINE)
@@ -99,7 +98,6 @@ async def chat(request: Request, body: ChatRequest):
                 if i + 1 < len(session_hist) and session_hist[i]["role"] == "user" and session_hist[i+1]["role"] == "ai":
                     chat_history_tuples.append((session_hist[i]["content"], session_hist[i+1]["content"]))
 
-            # --- ALTERAÇÃO PARA GARANTIR O FORMATO SSE CORRETO ---
             def format_sse(data: dict) -> str:
                 return f"data: {json.dumps(data)}\n\n"
 
@@ -112,7 +110,10 @@ async def chat(request: Request, body: ChatRequest):
 
             raw_answer = result.get("answer", "").strip()
             resposta_limpa = _limpar_resposta_llm(raw_answer)
-            resposta_final = _remover_duplicacao(resposta_limpa, logger)
+            resposta_sem_duplicacao = _remover_duplicacao(resposta_limpa, logger)
+            
+            # --- CORREÇÃO AUTOMÁTICA DE LATEX ADICIONADA AQUI ---
+            resposta_final = resposta_sem_duplicacao.replace('\\', '\\\\')
 
             if not resposta_final:
                 resposta_final = "Desculpe, o modelo não conseguiu formular uma resposta."
