@@ -5,28 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UCDB Chat</title>
   <link rel="stylesheet" href="/static/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
-  
   <script>
     MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']]
-      },
-      svg: {
-        fontCache: 'global'
-      }
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
     };
   </script>
   <script type="text/javascript" id="MathJax-script" async
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
   </script>
-  </head>
+</head>
 <body>
   <div class="header">
+    <button id="knowledge-toggle-button" class="sidebar-toggle left-toggle">
+      <i class="fas fa-bars"></i> </button>
     <h1>UCDB Chat</h1>
-  </div>
+    </div>
 
-  <main id="chat" class="chat"></main>
+  <aside id="knowledge-sidebar" class="sidebar left-sidebar">
+    <h2>Áreas de Conhecimento</h2>
+    <ul id="knowledge-list">
+      <li>Carregando...</li>
+    </ul>
+     <button id="close-knowledge-button" class="close-sidebar-button">&times;</button>
+  </aside>
+
+  <div class="main-container">
+    <main id="chat" class="chat">
+        </main>
+
+    <aside id="source-chunks-sidebar" class="sidebar right-sidebar">
+      <h2>Trechos Utilizados</h2>
+      <div id="source-chunks-content">
+        <p class="placeholder">Clique em "Ver Fontes Detalhadas" numa resposta para ver os trechos aqui.</p>
+      </div>
+       <button id="close-sources-button" class="close-sidebar-button">&times;</button>
+    </aside>
+  </div>
 
   <footer class="input-area">
     <textarea id="message" placeholder="Digite sua mensagem..." rows="1"></textarea>

@@ -1,203 +1,233 @@
-/* static/assets/css/style.css - Estilo Completo UCDB */
+/* static/assets/css/style.css - Layout Final Corrigido */
 
 /* --- Reset Básico e Fontes --- */
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
 
-* { 
-  margin: 0; 
-  padding: 0; 
-  box-sizing: border-box; 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden; /* Previne scroll na página inteira */
 }
 
 body {
   font-family: 'Lato', 'Segoe UI', sans-serif;
-  background-color: #f0f2f5; /* Um cinza claro para o fundo da página */
+  background-color: #f0f2f5;
   color: #333;
-  height: 100vh;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  position: relative; /* Contexto para elementos fixos */
 }
 
-/* --- Cabeçalho --- */
+/* --- Cabeçalho (Header) --- */
 .header {
-  background-color: #003366; /* Azul institucional da UCDB */
-  padding: 1rem;
+  background-color: #003366;
+  padding: 0 1rem;
   text-align: center;
-  border-bottom: 4px solid #a10202; /* Laranja institucional da UCDB */
+  border-bottom: 4px solid #a10202;
+  flex-shrink: 0;
+  position: fixed; /* Fixa no topo */
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1002;
+  height: 60px;
 }
 
 .header h1 {
   color: #ffffff;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
+  margin: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 
-/* --- Área do Chat --- */
+/* --- Botões de Toggle no Header --- */
+.sidebar-toggle {
+  background: none;
+  border: 1px solid white;
+  color: white;
+  border-radius: 5px;
+  width: 35px;
+  height: 35px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+  z-index: 1003;
+  position: relative; /* Para garantir o clique */
+}
+.sidebar-toggle:hover {
+  background-color: white;
+  color: #003366;
+}
+.left-toggle { order: -1; }
+
+
+/* --- Container Principal --- */
+.main-container {
+  display: flex;
+  flex: 1; /* Ocupa espaço vertical restante */
+  overflow: hidden;
+  position: relative;
+  margin-top: 60px; /* Espaço para o header fixo */
+  margin-bottom: 70px; /* Espaço para o footer fixo */
+  height: calc(100vh - 60px - 70px); /* Altura calculada */
+}
+
+/* --- Barras Laterais (Estilo Comum) --- */
+.sidebar {
+  width: 250px; /* Largura padrão */
+  position: fixed;
+  top: 60px; /* Abaixo do header */
+  bottom: 70px; /* Acima do footer */
+  background-color: #e9ecef;
+  padding: 1rem;
+  overflow-y: auto;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out; /* Usa transform para animação */
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.sidebar h2 { color: #003366; font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid #a10202; padding-bottom: 0.5rem; }
+.sidebar ul { list-style: none; padding: 0; }
+.sidebar li { margin-bottom: 0.5rem; color: #555; font-size: 0.9rem; }
+
+/* Botão para fechar sidebar */
+.close-sidebar-button {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.8rem; /* Aumenta tamanho */
+    font-weight: bold;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.2rem;
+    line-height: 1;
+    z-index: 1001;
+}
+.close-sidebar-button:hover { color: #343a40; }
+
+
+/* --- Barra Lateral Esquerda (Conhecimento) --- */
+.sidebar.left-sidebar {
+  transform: translateX(-100%); /* Começa escondida à esquerda */
+  left: 0;
+  border-right: 1px solid #d1d9e0;
+}
+.sidebar.left-sidebar.sidebar-visible {
+  transform: translateX(0); /* Mostra */
+}
+
+/* --- Área do Chat Central --- */
 .chat {
   flex: 1;
   padding: 1rem;
+  padding-bottom: 2rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   background-color: #ffffff;
+  height: 100%;
+  /* Margens ajustadas pela presença das sidebars */
+  margin-left: 0;
+  margin-right: 0;
+  transition: margin-left 0.3s ease-in-out, margin-right 0.3s ease-in-out;
+}
+/* Ajusta margens quando sidebars estão visíveis */
+body:has(.left-sidebar.sidebar-visible) .chat { margin-left: 250px; }
+body:has(.right-sidebar.sidebar-visible) .chat { margin-right: 300px; }
+
+/* --- Barra Lateral Direita (Trechos) --- */
+.sidebar.right-sidebar {
+  width: 300px;
+  transform: translateX(100%); /* Começa escondida à direita */
+  right: 0; /* Fixa à direita */
+  border-left: 1px solid #d1d9e0;
+  background-color: #f8f9fa; /* Cor ligeiramente diferente */
+}
+.sidebar.right-sidebar.sidebar-visible {
+  transform: translateX(0); /* Mostra */
 }
 
-/* --- Estilo das Mensagens --- */
-.message {
-  max-width: 80%;
-  padding: 0.8rem 1.2rem;
-  border-radius: 8px; /* Cantos menos arredondados, mais profissional */
-  line-height: 1.6;
-  word-wrap: break-word;
-  display: flex;
-  flex-direction: column;
-}
+/* Estilo para os trechos */
+#source-chunks-content .placeholder { font-style: italic; color: #888; padding-top: 1rem; }
+.source-chunk { background-color: #ffffff; border: 1px solid #d1d9e0; border-radius: 4px; padding: 0.8rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.5; word-wrap: break-word; }
+.source-chunk strong { display: block; margin-bottom: 0.5rem; color: #003366; font-size: 0.9rem; border-bottom: 1px solid #eee; padding-bottom: 0.3rem; }
+.source-chunk p { color: #333; }
 
-/* Mensagem do Utilizador */
-.user { 
-  align-self: flex-end;
-  background-color: #a10202; /* Laranja institucional */
-  color: #ffffff; 
-  border-bottom-right-radius: 2px;
-}
 
-/* Mensagem da IA */
-.ai { 
-  align-self: flex-start; 
-  background-color: #eef3f8; /* Um azul bem claro */
-  border: 1px solid #d1d9e0;
-  border-bottom-left-radius: 2px;
-}
+/* --- Estilos de Mensagens --- */
+.message { max-width: 95%; padding: 0.8rem 1.2rem; border-radius: 8px; line-height: 1.6; word-wrap: break-word; display: flex; flex-direction: column; margin-bottom: 1rem; }
+.user { align-self: flex-end; background-color: #a10202; color: #ffffff; border-bottom-right-radius: 2px; }
+.ai { align-self: flex-start; background-color: #eef3f8; border: 1px solid #d1d9e0; border-bottom-left-radius: 2px; }
+.ai .ai-header { display: block; color: #003366; font-size: 0.85rem; margin-bottom: 0.6rem; font-weight: 700; }
+.content { width: 100%; }
+.typing-indicator-wrapper { background-color: #eef3f8; border: 1px solid #d1d9e0; border-bottom-left-radius: 2px; align-self: flex-start; padding: 0.8rem 1.2rem; border-radius: 8px;}
+.typing-indicator-wrapper .ai-header { margin-bottom: 0.4rem; }
+.typing-indicator { display: flex; align-items: center; gap: 8px; }
+.typing-dot { width: 8px; height: 8px; background: #003366; border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+.typing-dot:nth-child(1) { animation-delay: 0s; } .typing-dot:nth-child(2) { animation-delay: 0.2s; } .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
-.ai .ai-header { /* Usando seletor mais específico */
-  content: "🤖 UCDB";
-  display: block;
-  color: #003366; /* Azul institucional */
-  font-size: 0.85rem;
-  margin-bottom: 0.6rem;
-  font-weight: 700;
-}
+/* Botão "Ver Fontes" dentro da mensagem AI */
+.show-sources-button { background-color: #0056b3; color: white; border: none; border-radius: 4px; padding: 0.3rem 0.8rem; font-size: 0.8rem; cursor: pointer; margin-top: 0.8rem; display: inline-block; transition: background-color 0.2s; }
+.show-sources-button:hover { background-color: #003366; }
+.sources-container { display: none !important; } /* Esconde container antigo */
 
-.content {
-  width: 100%;
-}
-
-/* --- Indicador de Digitação --- */
-.typing-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.5rem 0;
-}
-
-.typing-dot {
-  width: 10px; 
-  height: 10px;
-  background: #003366; /* Azul institucional */
-  border-radius: 50%;
-  animation: typing 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) { animation-delay: 0s; }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-6px); }
-}
-
-/* --- Área de Input --- */
+/* --- Área de Input (Footer) --- */
 .input-area {
   display: flex;
   padding: 1rem;
   background-color: #f0f2f5;
   border-top: 1px solid #d1d9e0;
+  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001; /* Acima do chat, abaixo das sidebars */
+  height: 70px;
+  align-items: center;
+  /* Ajusta padding com transição */
+  padding-left: 1rem;
+  padding-right: 1rem;
+  transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out;
 }
+/* Ajusta padding quando sidebars estão visíveis */
+body:has(.left-sidebar.sidebar-visible) .input-area { padding-left: calc(1rem + 250px); }
+body:has(.right-sidebar.sidebar-visible) .input-area { padding-right: calc(1rem + 300px); }
 
-#message {
-  flex: 1;
-  padding: 0.8rem 1.2rem;
-  background-color: #ffffff;
-  border: 1px solid #cccccc;
-  border-radius: 20px;
-  resize: none;
-  color: #333;
-  outline: none;
-  font-family: 'Lato', sans-serif;
-  font-size: 1rem;
-}
 
-#message:focus {
-  border-color: #003366;
-  box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.2);
-}
+#message { flex: 1; padding: 0.8rem 1.2rem; background-color: #ffffff; border: 1px solid #cccccc; border-radius: 20px; resize: none; color: #333; outline: none; font-family: 'Lato', sans-serif; font-size: 1rem; max-height: 40px; overflow-y: auto; line-height: 1.4; }
+#message:focus { border-color: #003366; box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.2); }
+#send { margin-left: 1rem; padding: 0.8rem 1.5rem; background-color: #003366; border: none; border-radius: 20px; color: #ffffff; font-weight: bold; cursor: pointer; transition: background-color 0.2s; height: 40px; }
+#send:hover { background-color: #004a99; }
+#send:disabled { opacity: 0.6; cursor: not-allowed; }
 
-#send {
-  margin-left: 1rem;
-  padding: 0.8rem 1.5rem;
-  background-color: #003366; /* Azul institucional */
-  border: none;
-  border-radius: 20px;
-  color: #ffffff;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-#send:hover {
-  background-color: #004a99; /* Azul um pouco mais claro no hover */
-}
-
-#send:disabled { 
-  opacity: 0.6;
-  cursor: not-allowed; 
-}
-
-/* --- Estilos para Conteúdo Markdown e Fontes --- */
-.ai code {
-  background-color: rgba(0, 0, 0, 0.08);
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.ai pre {
-  background-color: #f0f2f5;
-  padding: 1rem;
-  border-radius: 4px;
-  margin: 0.8rem 0;
-  border-left: 4px solid #a10202; /* Laranja como destaque */
-  overflow-x: auto;
-}
-
-.ai pre code {
-  background-color: transparent;
-  padding: 0;
-}
-
-.sources-container {
-  margin-top: 1rem;
-  padding-top: 0.8rem;
-  border-top: 1px solid #d1d9e0;
-}
-
-.sources-container h6 {
-  font-size: 0.8rem;
-  color: #003366;
-  margin-bottom: 0.4rem;
-  text-transform: uppercase;
-}
-
-.sources-container ul {
-  list-style-type: none;
-  padding-left: 0;
-  font-size: 0.8rem;
-  color: #555;
-}
-
-.error {
-  color: #d32f2f;
-  font-weight: bold;
-}
+/* --- Estilos Markdown, Erro --- */
+.ai code { background-color: rgba(0, 0, 0, 0.08); padding: 0.2em 0.4em; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; }
+.ai pre { background-color: #e9ecef; border: 1px solid #d1d9e0; padding: 1rem; border-radius: 4px; margin: 0.8rem 0; border-left: 4px solid #a10202; overflow-x: auto; font-size: 0.9em; }
+.ai pre code { background-color: transparent; padding: 0; }
+.ai p { margin-bottom: 0.5rem; }
+.ai h3 { margin-top: 1.2rem; margin-bottom: 0.8rem; border-bottom: 1px solid #ccc; padding-bottom: 0.3rem; }
+.ai h4 { margin-top: 1rem; margin-bottom: 0.5rem; color: #003366; }
+.ai ul, .ai ol { margin-left: 1.5rem; margin-bottom: 0.8rem; }
+.ai li { margin-bottom: 0.3rem; }
+.error { color: #d32f2f; font-weight: bold; }

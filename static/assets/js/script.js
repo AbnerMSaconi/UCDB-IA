@@ -1,223 +1,258 @@
-// static/assets/js/script.js - Versão com Mensagem de Boas-Vindas Dinâmica
-
 document.addEventListener('DOMContentLoaded', () => {
     // --- Elementos do DOM ---
     const chat = document.getElementById('chat');
     const messageInput = document.getElementById('message');
     const sendButton = document.getElementById('send');
+    const knowledgeSidebar = document.getElementById('knowledge-sidebar');
+    const knowledgeList = document.getElementById('knowledge-list');
+    const knowledgeToggleButton = document.getElementById('knowledge-toggle-button');
+    const closeKnowledgeButton = document.getElementById('close-knowledge-button');
+    const sourceChunksSidebar = document.getElementById('source-chunks-sidebar');
+    const sourceChunksContent = document.getElementById('source-chunks-content');
+    const closeSourcesButton = document.getElementById('close-sources-button');
 
-    /**
-     * Mostra a mensagem inicial de boas-vindas.
-     */
-    async function showWelcomeMessage() {
-        showTypingIndicator(); // Mostra o indicador enquanto carrega as áreas
+    let currentSourceChunks = []; // Armazena chunks da resposta atual
+
+    /** Preenche Sidebar Esquerda (Conhecimento) */
+    async function populateKnowledgeSidebar() {
         try {
             const response = await fetch('/knowledge-areas');
-            if (!response.ok) {
-                throw new Error('Não foi possível obter as áreas de conhecimento.');
-            }
+            if (!response.ok) throw new Error('Falha ao buscar áreas');
             const data = await response.json();
-            const areas = data.areas;
-
-            let welcomeText = "Olá, sou o **UCDB-IA**, um assistente de estudos acadêmicos.";
-
-            if (areas && areas.length > 0) {
-                welcomeText += "\n\nAtualmente, tenho domínio sobre as seguintes áreas de conhecimento:\n\n";
-                const areaList = areas.map(area => `- ${area}`).join('\n');
-                welcomeText += areaList;
+            knowledgeList.innerHTML = '';
+            if (data.areas && data.areas.length > 0) {
+                data.areas.forEach(area => {
+                    const li = document.createElement('li');
+                    li.textContent = area;
+                    knowledgeList.appendChild(li);
+                });
             } else {
-                welcomeText += "\n\nNo momento, não tenho nenhum documento em minha base de conhecimento. Por favor, adicione arquivos PDF na pasta `/pdfs` e reinicie o sistema para que eu possa aprender sobre eles.";
+                knowledgeList.innerHTML = '<li>Nenhuma área encontrada.</li>';
             }
-            
-            welcomeText += "\n\nComo posso ajudar?";
-            
-            hideTypingIndicator();
-            addMessage('ai', welcomeText);
-
         } catch (error) {
-            hideTypingIndicator();
-            console.error("Erro ao carregar mensagem de boas-vindas:", error);
-            addMessage('ai', "Olá, sou o **UCDB-IA**. Não consegui carregar minha base de conhecimento, mas estou pronto para ajudar como puder.");
+            console.error("Erro sidebar conhecimento:", error);
+            knowledgeList.innerHTML = '<li>Erro ao carregar.</li>';
         }
     }
 
+    /** Alterna Sidebar Esquerda */
+    function toggleKnowledgeSidebar() {
+        knowledgeSidebar.classList.toggle('sidebar-visible');
+        if (sourceChunksSidebar.classList.contains('sidebar-visible')) {
+            sourceChunksSidebar.classList.remove('sidebar-visible');
+        }
+    }
 
-    // --- Funções Auxiliares (O restante das funções permanece o mesmo) ---
+    /** Alterna Sidebar Direita (Fontes/Trechos) */
+    function toggleSourcesSidebar() {
+        sourceChunksSidebar.classList.toggle('sidebar-visible');
+         if (knowledgeSidebar.classList.contains('sidebar-visible')) {
+            knowledgeSidebar.classList.remove('sidebar-visible');
+        }
+    }
 
-    /**
-     * Adiciona uma mensagem à interface do chat.
-     * @param {string} role - O autor da mensagem ('user' ou 'ai').
-     * @param {string} content - O conteúdo HTML ou de texto da mensagem.
-     * @returns {HTMLElement} O elemento da mensagem criado.
-     */
-    function addMessage(role, content = '') {
+    /** Limpa e preenche a Sidebar Direita com os trechos (Atualizada com Links) */
+    function displaySourceChunks(chunks) {
+        sourceChunksContent.innerHTML = ''; // Limpa
+        if (chunks && chunks.length > 0) {
+            chunks.forEach(chunk => {
+                const chunkDiv = document.createElement('div');
+                chunkDiv.className = 'source-chunk';
+
+                // --- ALTERAÇÃO AQUI: Cria o Link ---
+                // Cria um link <a> com o URL do PDF, abrindo em nova aba
+                // O texto do link continua a ser "Nome.pdf (pág. X)"
+                const sourceLink = `<a href="${chunk.url}" target="_blank" rel="noopener noreferrer" title="Abrir ${chunk.source.split(' ')[0]}">${chunk.source}</a>`;
+
+                // Usa o link no cabeçalho do trecho (dentro do <strong>)
+                // Usamos innerHTML porque o backend já escapou o HTML do chunk.content
+                chunkDiv.innerHTML = `<strong>${sourceLink}</strong><p>${chunk.content.replace(/\n/g, '<br>')}</p>`;
+                sourceChunksContent.appendChild(chunkDiv);
+            });
+        } else {
+            sourceChunksContent.innerHTML = '<p class="placeholder">Nenhum trecho específico foi utilizado para esta resposta.</p>';
+        }
+    }
+
+    // --- Funções Auxiliares (addMessage, show/hideTyping, scrollToBottom) ---
+     function addMessage(role, content = '', isLoading = false) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message ${role}`;
-
         if (role === 'ai') {
-            messageWrapper.innerHTML = `
+             messageWrapper.innerHTML = `
                 <div class="ai-header">🤖 UCDB</div>
                 <div class="content"></div>
-                <div class="sources-container" style="display: none;"></div>
-            `;
-            if (content) {
-                // Usamos marked.parse para renderizar o Markdown da mensagem de boas-vindas
-                messageWrapper.querySelector('.content').innerHTML = marked.parse(content);
-            }
+                `;
+             if (isLoading) {
+                 messageWrapper.querySelector('.content').innerHTML = '<p>...</p>';
+             } else if (content){
+                 const contentDiv = messageWrapper.querySelector('.content');
+                 contentDiv.innerHTML = marked.parse(content);
+                 // Adia MathJax para o final do stream
+             }
         } else {
             messageWrapper.innerHTML = `<div class="content"></div>`;
             messageWrapper.querySelector('.content').textContent = content;
         }
-        
         chat.appendChild(messageWrapper);
         scrollToBottom();
         return messageWrapper;
     }
 
-    /**
-     * Mostra o indicador de "a digitar...".
-     * @returns {HTMLElement} O elemento do indicador de digitação.
-     */
     function showTypingIndicator() {
+        if (document.getElementById('typing')) return;
         const typingIndicator = document.createElement('div');
         typingIndicator.id = 'typing';
-        typingIndicator.className = 'message ai';
-        typingIndicator.innerHTML = `
-            <div class="ai-header">🤖 UCDB</div>
-            <div class="typing-indicator">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-        `;
+        typingIndicator.className = 'message ai typing-indicator-wrapper';
+        typingIndicator.innerHTML = `<div class="ai-header">🤖 UCDB</div><div class="typing-indicator"><div class="typing-dot"></div> <div class="typing-dot"></div> <div class="typing-dot"></div></div>`;
         chat.appendChild(typingIndicator);
         scrollToBottom();
         return typingIndicator;
     }
 
-    /**
-     * Remove o indicador de "a digitar...".
-     */
     function hideTypingIndicator() {
-        const typingIndicator = document.getElementById('typing');
-        if (typingIndicator) {
-            typingIndicator.remove();
-        }
+        const el = document.getElementById('typing');
+        if (el) el.remove();
     }
 
-    /**
-     * Mantém o chat scrollado para a última mensagem.
-     */
     function scrollToBottom() {
-        chat.scrollTop = chat.scrollHeight;
+        // Usa requestAnimationFrame para garantir que o scroll ocorra após o DOM update
+        requestAnimationFrame(() => {
+             // Scroll suave pode ser melhor, mas direto é mais garantido
+             // chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+             chat.scrollTop = chat.scrollHeight;
+        });
     }
+
 
     // --- Lógica Principal de Envio de Mensagem ---
-
     async function handleSendMessage() {
         const text = messageInput.value.trim();
-        if (!text) return;
+        if (!text || sendButton.disabled) return;
 
         addMessage('user', text);
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
-        sendButton.disabled = true;
+        messageInput.value = ''; messageInput.style.height = 'auto'; sendButton.disabled = true;
+        sourceChunksContent.innerHTML = '<p class="placeholder">Aguardando nova resposta...</p>';
+        currentSourceChunks = []; // Reseta chunks
 
-        const typingIndicator = showTypingIndicator();
-        
-        let aiMessageElement;
+        let aiMessageElement = addMessage('ai', '', true); // Cria bolha de loading
+        const aiContentDiv = aiMessageElement.querySelector('.content');
+
         let responseBuffer = '';
+        let sourcesData = null; // Lista formatada para o botão
+        let streamComplete = false;
+        let mathJaxRendered = false; // Flag para controlar renderização MathJax
 
         try {
             const response = await fetch('/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text })
             });
 
-            if (!response.ok) {
+            if (!response.ok || !response.body) {
                 throw new Error(`Erro de rede: ${response.statusText}`);
             }
-            
-            hideTypingIndicator();
-            aiMessageElement = addMessage('ai');
-            const aiContentDiv = aiMessageElement.querySelector('.content');
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+            aiContentDiv.innerHTML = ''; // Remove placeholder de loading
 
-            let streamDone = false;
-            while (!streamDone) {
+            const reader = response.body.getReader(); const decoder = new TextDecoder();
+
+            while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
-                    streamDone = true;
-                    break;
+                    // Render final do conteúdo principal (Markdown)
+                    if (responseBuffer && !aiContentDiv.classList.contains('error-message')) {
+                        aiContentDiv.innerHTML = marked.parse(responseBuffer);
+                        mathJaxRendered = false; // Sinaliza que MathJax precisa rodar
+                    }
+
+                    // Cria o botão "Ver Fontes Detalhadas" se houver fontes E chunks
+                    if (sourcesData && sourcesData.length > 0 && currentSourceChunks && currentSourceChunks.length > 0) {
+                        const sourcesButton = document.createElement('button');
+                        sourcesButton.textContent = 'Ver Fontes Detalhadas';
+                        sourcesButton.className = 'show-sources-button';
+                        sourcesButton.dataset.chunks = JSON.stringify(currentSourceChunks); // Guarda chunks no botão
+                        sourcesButton.onclick = (event) => {
+                            try {
+                                const chunksToShow = JSON.parse(event.target.dataset.chunks);
+                                displaySourceChunks(chunksToShow);
+                                toggleSourcesSidebar();
+                            } catch (e) { console.error("Erro ao processar chunks:", e); toggleSourcesSidebar(); }
+                        };
+                        aiMessageElement.appendChild(sourcesButton);
+                    }
+
+                    // Renderiza MathJax após todo o conteúdo e botão estarem no DOM
+                    if (!mathJaxRendered && responseBuffer && !aiContentDiv.classList.contains('error-message')) {
+                         try {
+                             console.log("Tentando renderizar MathJax no final...");
+                             await MathJax.typesetPromise([aiContentDiv]);
+                             console.log("MathJax renderizado com sucesso.");
+                             mathJaxRendered = true;
+                         } catch (err) { console.error('Erro MathJax final:', err); }
+                    }
+
+                    scrollToBottom(); // Garante scroll final
+                    break; // Sai do loop
                 }
 
                 const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n').filter(line => line.trim().startsWith('data:'));
+                const lines = chunk.split('\n\n');
 
                 for (const line of lines) {
-                    try {
-                        const data = JSON.parse(line.slice(5).trim());
+                     if (line.startsWith('data:')) {
+                        try {
+                            const data = JSON.parse(line.slice(5).trim());
 
-                        if (data.type === 'chunk') {
-                            responseBuffer = data.content;
-                            aiContentDiv.innerHTML = marked.parse(responseBuffer);
-                            
-                            // <-- ALTERAÇÃO IMPORTANTE AQUI -->
-                            // Pede ao MathJax para procurar e renderizar a matemática no elemento atualizado
-                            MathJax.typesetPromise([aiContentDiv]).catch((err) => console.log('Erro ao renderizar MathJax:', err));
-                            
-                            scrollToBottom();
-                        } else if (data.type === 'sources' && data.content.length > 0) {
-                            const sourcesContainer = aiMessageElement.querySelector('.sources-container');
-                            sourcesContainer.style.display = 'block';
-                            let sourcesHTML = '<h6>Fontes:</h6><ul>';
-                            data.content.forEach(source => {
-                                sourcesHTML += `<li>${source}</li>`;
-                            });
-                            sourcesHTML += '</ul>';
-                            sourcesContainer.innerHTML = sourcesHTML;
-                        } else if (data.type === 'error') {
-                            aiContentDiv.innerHTML = `<p class="error">❌ Erro: ${data.content}</p>`;
-                        }
-                    } catch (e) {
-                        console.warn('Chunk inválido ignorado:', line);
+                            if (data.type === 'source_chunks') {
+                                currentSourceChunks = data.content;
+                            }
+                            else if (data.type === 'chunk') {
+                                responseBuffer = data.content;
+                                // Atualiza apenas texto bruto + cursor
+                                aiContentDiv.textContent = responseBuffer + '█';
+                                scrollToBottom(); // Scroll durante o stream
+                            }
+                            else if (data.type === 'sources') {
+                                sourcesData = data.content;
+                            }
+                            else if (data.type === 'complete') {
+                                streamComplete = true;
+                                // Remove o cursor após receber 'complete'
+                                if (aiContentDiv.textContent.endsWith('█')) {
+                                   aiContentDiv.textContent = responseBuffer;
+                                }
+                            }
+                            else if (data.type === 'error') {
+                                aiContentDiv.innerHTML = `<p class="error">❌ Erro: ${data.content}</p>`;
+                                aiContentDiv.classList.add('error-message');
+                                scrollToBottom();
+                            }
+                        } catch (e) { console.warn('Chunk inválido:', line, e); }
                     }
                 }
-            }
-
+            } // Fim do while(true)
         } catch (error) {
-            hideTypingIndicator();
+            const errorMsg = `❌ Erro na comunicação: ${error.message}`;
             if (aiMessageElement) {
-                aiMessageElement.querySelector('.content').innerHTML = `<p class="error">❌ Erro na comunicação com o servidor: ${error.message}</p>`;
-            } else {
-                addMessage('ai', `<p class="error">❌ Erro na comunicação com o servidor: ${error.message}</p>`);
-            }
+                aiContentDiv.innerHTML = `<p class="error">${errorMsg}</p>`;
+                aiContentDiv.classList.add('error-message');
+            } else { addMessage('ai', `<p class="error">${errorMsg}</p>`); }
+            scrollToBottom();
         } finally {
             sendButton.disabled = false;
             messageInput.focus();
-            scrollToBottom();
         }
     }
 
     // --- Event Listeners ---
-
     sendButton.addEventListener('click', handleSendMessage);
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    });
-    
-    messageInput.addEventListener('input', () => {
-        messageInput.style.height = 'auto';
-        messageInput.style.height = `${Math.min(messageInput.scrollHeight, 150)}px`;
-    });
+    messageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } });
+    messageInput.addEventListener('input', () => { messageInput.style.height = 'auto'; messageInput.style.height = `${Math.min(messageInput.scrollHeight, 150)}px`; });
+    knowledgeToggleButton.addEventListener('click', toggleKnowledgeSidebar);
+    closeKnowledgeButton.addEventListener('click', toggleKnowledgeSidebar);
+    closeSourcesButton.addEventListener('click', toggleSourcesSidebar);
 
     // --- Inicialização ---
-    showWelcomeMessage(); // Chama a nova função para exibir a mensagem de boas-vindas
+    populateKnowledgeSidebar();
     messageInput.focus();
 });
